@@ -20,7 +20,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 # Create directories
-RUN mkdir -p /app /data/store /data/cache /data/auth-token
+RUN mkdir -p /app /data/store /data/cache
+
+# Setup auth token
+RUN echo "local-development-token-32-bytes" > /data/auth-token
 
 # Copy HydraDB binary from GHCR image
 COPY --from=hydradb /usr/local/bin/graph-node /app/hydradb/graph-node
