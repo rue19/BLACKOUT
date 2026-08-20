@@ -24,6 +24,16 @@ BLACKOUT simulates the removal of a person, source, or system from an organizati
 
 ---
 
+### Landing
+
+![Landing Page](docs/screenshots/landing.png)
+
+### Dashboard
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+---
+
 ## Quick Start
 
 ### Prerequisites
