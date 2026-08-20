@@ -320,6 +320,44 @@ writer.close()
 
 ---
 
+## Deploy to Railway
+
+### Prerequisites
+
+- [Railway CLI](https://docs.railway.com/reference/cli) installed
+- Railway account (`railway login`)
+
+### Quick Deploy
+
+```bash
+# Deploy all services
+./deploy_railway.sh
+
+# Or manually:
+railway login
+railway init
+
+# Deploy each service
+railway up --service hydradb --docker docker-compose.railway.yml
+railway up --service backend
+railway up --service frontend
+```
+
+### Set Environment Variables
+
+```bash
+railway variables set HYDRADB_AUTH_TOKEN=local-development-token-32-bytes --service backend
+railway variables set CORS_ORIGINS="*" --service backend
+```
+
+### Manual Docker Compose Deploy
+
+```bash
+docker compose -f docker-compose.railway.yml up -d
+```
+
+---
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.

@@ -1,0 +1,65 @@
+services:
+  hydradb:
+    image: ghcr.io/hydra-db/hydradb:latest
+    user: "0:0"
+    restart: unless-stopped
+    environment:
+      CLOUD_PROVIDER: local
+      LOCAL_PATH: /data/store
+      GRAPH_NAMESPACE: default
+      GRAPH_ID: default
+      GRAPH_CELL_ID: cell-0
+      GRAPH_CELLS: cell-0
+      GRAPH_NODE_ID: node-0
+      GRAPH_BOLT_NODE_ADDRESSES: node-0=0.0.0.0:7687
+      GRAPH_ADVERTISED_BOLT_ADDR: 0.0.0.0:7687
+      GRAPH_DATA_CACHE_DIR: /data/cache
+      GRAPH_AUTH_TOKEN_FILE: /data/auth-token
+      GRAPH_ALLOW_PLAINTEXT: "true"
+      RUST_MIN_STACK: 33554432
+    volumes:
+      - hydradb-data:/data/store
+      - hydradb-cache:/data/cache
+      - hydradb-token:/data/auth-token:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9090/readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      hydradb:
+        condition: service_healthy
+    environment:
+      HYDRADB_BOLT_URI: bolt://hydradb:7687
+      HYDRADB_AUTH_TOKEN: local-development-token-32-bytes
+      CORS_ORIGINS: "*"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:${PORT:-8000}/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      BACKEND_URL: backend:${PORT:-8000}
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+
+volumes:
+  hydradb-data:
+  hydradb-cache:
+  hydradb-token:

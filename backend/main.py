@@ -5,7 +5,6 @@ BLACKOUT Backend - FastAPI Application
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
-import sys
 from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
@@ -18,9 +17,10 @@ app = FastAPI(
     version="0.1.0",
 )
 
+cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

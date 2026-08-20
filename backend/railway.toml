@@ -1,0 +1,15 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "backend/Dockerfile"
+
+[deploy]
+startCommand = "python seed_on_startup.py && uvicorn main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/health"
+healthcheckTimeout = 10
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[env]
+HYDRADB_BOLT_URI = { referenceService = "hydradb", referenceVariable = "BOLT_URI" }
+HYDRADB_AUTH_TOKEN = "local-development-token-32-bytes"
+CORS_ORIGINS = "*"
