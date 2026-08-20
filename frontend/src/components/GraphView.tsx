@@ -11,6 +11,7 @@ const GraphView = ({ orphanedClaimIds = [], removedNodeId = null }: Props) => {
   const [graphData, setGraphData] = useState<any>({ nodes: [], links: [] });
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 580 });
+  const fgRef = useRef<any>();
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -48,7 +49,7 @@ const GraphView = ({ orphanedClaimIds = [], removedNodeId = null }: Props) => {
     return node.id === removedNodeId || node.string_id === removedNodeId;
   }, [removedNodeId]);
 
-  const getNodeColor = useCallback((node: any) => {
+  const nodeColor = useCallback((node: any) => {
     if (isRemoved(node)) return '#4b5563';
     if (isOrphaned(node)) return '#dc2626';
     switch (node.label) {
@@ -61,47 +62,27 @@ const GraphView = ({ orphanedClaimIds = [], removedNodeId = null }: Props) => {
     }
   }, [isRemoved, isOrphaned]);
 
-  const nodeCanvasObject = useCallback((node: any, ctx: CanvasRenderingContext2D) => {
-    const size = node.val || 4;
-    const color = getNodeColor(node);
-
-    if (isOrphaned(node)) {
-      ctx.beginPath();
-      ctx.arc(node.x, node.y, size + 4, 0, 2 * Math.PI);
-      ctx.fillStyle = 'rgba(220, 38, 38, 0.2)';
-      ctx.fill();
-    }
-
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
-    ctx.fillStyle = color;
-    ctx.fill();
-  }, [getNodeColor, isOrphaned]);
-
-  const linkColor = useCallback((link: any) => {
-    if (!removedNodeId) return 'rgba(255,255,255,0.15)';
-    const srcNode = typeof link.source === 'object' ? link.source : null;
-    const tgtNode = typeof link.target === 'object' ? link.target : null;
-    const srcId = srcNode ? (srcNode.id || srcNode.string_id) : link.source;
-    const tgtId = tgtNode ? (tgtNode.id || tgtNode.string_id) : link.target;
-    if (srcId === removedNodeId || tgtId === removedNodeId) return 'rgba(255,255,255,0.05)';
-    return 'rgba(255,255,255,0.15)';
-  }, [removedNodeId]);
-
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: '500px' }}>
       <ForceGraph2D
+        ref={fgRef}
         graphData={graphData}
-        nodeColor={getNodeColor}
+        nodeColor={nodeColor}
         nodeVal={(node: any) => node.val || 4}
-        nodeLabel={() => ''}
-        linkLabel={() => ''}
-        linkColor={linkColor}
+        nodeLabel={(node: any) => {
+          const name = node.name || node.string_id || node.id;
+          return `<div style="background:rgba(0,0,0,0.9);color:#fff;padding:6px 10px;border-radius:4px;font-family:monospace;font-size:11px;border:1px solid rgba(255,255,255,0.2);max-width:250px;">
+            <div style="color:${nodeColor(node)};font-weight:bold;margin-bottom:2px;">${node.label}</div>
+            <div>${name}</div>
+            ${node.text_summary ? `<div style="color:#9ca3af;font-size:10px;margin-top:4px;">${node.text_summary.slice(0, 100)}...</div>` : ''}
+          </div>`;
+        }}
+        linkLabel={(link: any) => `<div style="background:rgba(0,0,0,0.9);color:#818cf8;padding:4px 8px;border-radius:3px;font-family:monospace;font-size:10px;">${link.type}</div>`}
+        linkColor={() => 'rgba(255,255,255,0.12)'}
         linkWidth={1}
         linkDirectionalParticles={2}
         linkDirectionalParticleWidth={1.5}
         linkDirectionalParticleColor={() => 'rgba(99,102,241,0.6)'}
-        nodeCanvasObject={nodeCanvasObject}
         nodePointerAreaPaint={(node: any, color: string, ctx: CanvasRenderingContext2D) => {
           const size = (node.val || 4) + 4;
           ctx.beginPath();
