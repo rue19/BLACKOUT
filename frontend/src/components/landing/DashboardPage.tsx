@@ -14,7 +14,6 @@ export default function DashboardPage() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [lastTarget, setLastTarget] = useState<{ type: string; id: string } | null>(null);
   const [removedNodeId, setRemovedNodeId] = useState<string | null>(null);
-  const [graphKey, setGraphKey] = useState(0);
 
   useEffect(() => {
     getResilience().then(res => setResilienceScore(res.data.score));
@@ -29,7 +28,6 @@ export default function DashboardPage() {
       setResilienceScore(result.data.resilienceScoreAfter);
       setLastTarget({ type: targetType, id: targetId });
       setRemovedNodeId(targetId);
-      setGraphKey(k => k + 1);
     } finally {
       setIsSimulating(false);
     }
@@ -46,7 +44,6 @@ export default function DashboardPage() {
     setRecoveryPlan([]);
     setRemovedNodeId(null);
     setLastTarget(null);
-    setGraphKey(k => k + 1);
     getResilience().then(res => setResilienceScore(res.data.score));
   }, []);
 
@@ -73,7 +70,7 @@ export default function DashboardPage() {
               height: '600px',
               position: 'relative',
             }}>
-              <GraphView key={graphKey} orphanedClaimIds={orphanedClaimIds} removedNodeId={removedNodeId} />
+              <GraphView orphanedClaimIds={orphanedClaimIds} removedNodeId={removedNodeId} />
             </div>
           </div>
 
