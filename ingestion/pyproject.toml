@@ -1,0 +1,17 @@
+[project]
+name = "blackout-ingestion"
+version = "0.1.0"
+description = "BLACKOUT ingestion pipeline - raw sources to HydraDB"
+requires-python = ">=3.11"
+dependencies = [
+    "neo4j>=5.24",
+    "anthropic>=0.40",
+    "rapidfuzz>=3.10",
+    "pydantic>=2.9",
+    "python-dotenv",
+    "httpx",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

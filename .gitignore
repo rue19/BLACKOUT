@@ -1,0 +1,40 @@
+# Dependencies
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment
+.env
+
+# Large media (screenshots, screencasts)
+*.webm
+*.mp4
+*.mov
+Screenshot*.png
+ChatGPT*.png
+
+# HydraDB persistent data
+hydradb-data/
+
+# Large data files (use Git LFS or download separately)
+data/EnterpriseRAG-Bench/data/documents/*.parquet
+data/EnterpriseRAG-Bench/data/questions/*.parquet
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+.vite/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
