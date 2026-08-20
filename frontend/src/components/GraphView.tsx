@@ -62,6 +62,42 @@ const GraphView = ({ orphanedClaimIds = [], removedNodeId = null }: Props) => {
     }
   }, [isRemoved, isOrphaned]);
 
+  const prevOrphanedRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    const fg = fgRef.current;
+    if (!fg) return;
+
+    const changed =
+      prevOrphanedRef.current.length !== orphanedClaimIds.length ||
+      prevOrphanedRef.current.some((id, i) => id !== orphanedClaimIds[i]) ||
+      (prevOrphanedRef.current.length === 0 && orphanedClaimIds.length > 0);
+    prevOrphanedRef.current = orphanedClaimIds;
+
+    if (changed && graphData.nodes.length > 0) {
+      if (removedNodeId) {
+        const node = graphData.nodes.find((n: any) => n.id === removedNodeId || n.string_id === removedNodeId);
+        if (node) {
+          node.fx = null;
+          node.fy = null;
+          node.vx = (Math.random() - 0.5) * 20;
+          node.vy = (Math.random() - 0.5) * 20;
+        }
+      }
+      graphData.nodes.forEach((n: any) => {
+        if (orphanedClaimIds.includes(n.id) || orphanedClaimIds.includes(n.string_id)) {
+          n.vx = (Math.random() - 0.5) * 15;
+          n.vy = (Math.random() - 0.5) * 15;
+        }
+      });
+      fg.d3ReheatSimulation();
+    }
+
+    if (!removedNodeId && orphanedClaimIds.length === 0 && graphData.nodes.length > 0) {
+      fg.d3ReheatSimulation();
+    }
+  }, [orphanedClaimIds, removedNodeId, graphData]);
+
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: '500px' }}>
       <ForceGraph2D
