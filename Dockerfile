@@ -1,4 +1,4 @@
-# Stage 1: Pull HydraDB binary
+# Stage 1: Pull HydraDB binary and libraries
 FROM ghcr.io/hydra-db/hydradb:latest AS hydradb
 
 # Stage 2: Build frontend
@@ -7,17 +7,18 @@ WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm install
 COPY frontend/ .
-ARG VITE_API_BASE_URL=
+ARG VITE_API_BASE_URL=/
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN npm run build
 
 # Stage 3: Final image
 FROM python:3.11-slim
 
-# Install system deps
+# Install system deps (envsubst from gettext-base)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl supervisor nginx && \
-    rm -rf /var/lib/apt/lists/*
+    curl supervisor nginx ca-certificates gettext-base && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -f /etc/nginx/sites-enabled/default
 
 # Create directories
 RUN mkdir -p /app /data/store /data/cache
@@ -25,29 +26,30 @@ RUN mkdir -p /app /data/store /data/cache
 # Setup auth token
 RUN echo "local-development-token-32-bytes" > /data/auth-token
 
-# Copy HydraDB binary from GHCR image
+# Copy HydraDB binary and required shared libraries from GHCR image
 COPY --from=hydradb /usr/local/bin/graph-node /app/hydradb/graph-node
-RUN chmod +x /app/hydradb/graph-node
+COPY --from=hydradb /usr/lib/x86_64-linux-gnu/libgraphblas.so* /usr/lib/x86_64-linux-gnu/
+COPY --from=hydradb /usr/lib/x86_64-linux-gnu/libgomp.so* /usr/lib/x86_64-linux-gnu/
+RUN chmod +x /app/hydradb/graph-node && ldconfig
 
-# Copy backend
+# Copy backend and ingestion
 COPY backend/ /app/backend/
+COPY ingestion/ /app/ingestion/
 WORKDIR /app/backend
 RUN pip install --no-cache-dir neo4j fastapi uvicorn pydantic python-dotenv
 
 # Copy frontend build
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
-# Copy frontend nginx config (static for single container)
-COPY nginx-single.conf /etc/nginx/conf.d/default.conf
+# Copy nginx config as template (envsubst at runtime for PORT)
+COPY nginx-single.conf /etc/nginx/nginx-single.conf.template
+
+# Copy startup scripts
+COPY start-nginx.sh /app/start-nginx.sh
+RUN chmod +x /app/start-nginx.sh
 
 # Copy supervisord config
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Copy seed script
-COPY backend/seed_on_startup.py /app/backend/seed_on_startup.py
-
-# Setup auth token
-RUN echo "local-development-token-32-bytes" > /data/auth-token
 
 # Working directory
 WORKDIR /app
